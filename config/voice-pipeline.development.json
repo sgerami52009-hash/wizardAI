@@ -1,0 +1,147 @@
+{
+  "environment": "development",
+  "audio": {
+    "sampleRate": 16000,
+    "channels": 1,
+    "bitDepth": 16,
+    "bufferSize": 1024,
+    "noiseReduction": true,
+    "echoCancellation": true,
+    "automaticGainControl": true,
+    "maxRecordingDuration": 30
+  },
+  "wakeWord": {
+    "enabled": true,
+    "sensitivity": 0.6,
+    "modelPath": "./models/wake-word-dev.onnx",
+    "phrases": ["hey assistant", "hello assistant"],
+    "continuousListening": true,
+    "powerSaveMode": false,
+    "confidenceThreshold": 0.7,
+    "temporalValidationWindow": 500
+  },
+  "speechRecognition": {
+    "modelPath": "./models/whisper-base-dev.onnx",
+    "language": "en-US",
+    "supportedLanguages": ["en-US"],
+    "streamingEnabled": true,
+    "confidenceThreshold": 0.7,
+    "timeoutDuration": 5,
+    "maxAlternatives": 5,
+    "noiseReduction": true,
+    "userProfilesEnabled": true
+  },
+  "safety": {
+    "enabled": true,
+    "strictMode": false,
+    "ageBasedFiltering": true,
+    "defaultAgeGroup": "adult",
+    "auditLogging": true,
+    "parentalOverride": true,
+    "contentFilters": {
+      "profanity": true,
+      "inappropriateTopics": true,
+      "harmfulInstructions": true
+    },
+    "riskLevels": {
+      "low": ["mild language"],
+      "medium": ["complex topics", "technical discussions"],
+      "high": ["harmful content", "inappropriate requests"]
+    }
+  },
+  "intent": {
+    "modelPath": "./models/intent-classifier-dev.onnx",
+    "confidenceThreshold": 0.6,
+    "contextWindowSize": 10,
+    "maxConversationTurns": 20,
+    "disambiguationEnabled": true,
+    "customIntents": {
+      "debug_mode": {
+        "name": "debug_mode",
+        "patterns": ["enable debug", "show debug info", "debug mode on"],
+        "parameters": {},
+        "requiresConfirmation": false
+      }
+    }
+  },
+  "response": {
+    "personalityEnabled": true,
+    "variationEnabled": true,
+    "contextAware": true,
+    "maxResponseLength": 1000,
+    "templatePath": "./templates/responses-dev",
+    "multiModalEnabled": true,
+    "emotionalTone": true
+  },
+  "tts": {
+    "engine": "offline-tts-dev",
+    "voiceId": "dev-voice",
+    "rate": 1.2,
+    "pitch": 1.0,
+    "volume": 0.9,
+    "ssmlEnabled": true,
+    "streamingEnabled": true,
+    "emotionalTones": ["neutral", "happy", "concerned", "excited", "debug"],
+    "voiceCharacteristics": {
+      "consistency": false,
+      "avatarSync": true
+    }
+  },
+  "performance": {
+    "maxMemoryUsage": 4096,
+    "maxCpuUsage": 80,
+    "responseTimeTarget": 1000,
+    "resourceMonitoring": true,
+    "adaptiveQuality": false,
+    "queueManagement": {
+      "maxQueueSize": 20,
+      "prioritization": false,
+      "timeoutHandling": true
+    }
+  },
+  "offline": {
+    "enabled": true,
+    "fallbackModels": {
+      "wakeWord": "./models/wake-word-dev-lite.onnx",
+      "speechRecognition": "./models/whisper-tiny-dev.onnx",
+      "intent": "./models/intent-dev-lite.onnx",
+      "tts": "./models/tts-dev-lite.onnx"
+    },
+    "connectivityCheck": {
+      "interval": 10,
+      "timeout": 3,
+      "retryAttempts": 5
+    },
+    "featureAvailability": {
+      "basicVoiceCommands": true,
+      "smartHomeControl": true,
+      "weatherUpdates": true,
+      "onlineSearch": true,
+      "debugCommands": true
+    }
+  },
+  "logging": {
+    "level": "debug",
+    "enableConsole": true,
+    "enableFile": true,
+    "filePath": "./logs/voice-pipeline-dev.log",
+    "maxFileSize": 50,
+    "maxFiles": 10,
+    "auditTrail": true,
+    "performanceMetrics": true,
+    "sanitizePII": false
+  },
+  "hardware": {
+    "platform": "generic",
+    "optimizations": {
+      "gpu": false,
+      "tensorrt": false,
+      "cuda": false
+    },
+    "resourceLimits": {
+      "memory": 8192,
+      "cpu": 8
+    },
+    "thermalManagement": false
+  }
+}

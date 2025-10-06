@@ -1,0 +1,146 @@
+{
+  "environment": "testing",
+  "audio": {
+    "sampleRate": 16000,
+    "channels": 1,
+    "bitDepth": 16,
+    "bufferSize": 2048,
+    "noiseReduction": false,
+    "echoCancellation": false,
+    "automaticGainControl": false,
+    "maxRecordingDuration": 10
+  },
+  "wakeWord": {
+    "enabled": true,
+    "sensitivity": 0.5,
+    "modelPath": "./test-models/wake-word-test.onnx",
+    "phrases": ["test wake", "hey test"],
+    "continuousListening": false,
+    "powerSaveMode": false,
+    "confidenceThreshold": 0.6,
+    "temporalValidationWindow": 100
+  },
+  "speechRecognition": {
+    "modelPath": "./test-models/whisper-test.onnx",
+    "language": "en-US",
+    "supportedLanguages": ["en-US"],
+    "streamingEnabled": false,
+    "confidenceThreshold": 0.5,
+    "timeoutDuration": 1,
+    "maxAlternatives": 1,
+    "noiseReduction": false,
+    "userProfilesEnabled": false
+  },
+  "safety": {
+    "enabled": true,
+    "strictMode": true,
+    "ageBasedFiltering": false,
+    "defaultAgeGroup": "adult",
+    "auditLogging": true,
+    "parentalOverride": false,
+    "contentFilters": {
+      "profanity": true,
+      "inappropriateTopics": true,
+      "harmfulInstructions": true
+    },
+    "riskLevels": {
+      "low": ["test content"],
+      "medium": ["test scenarios"],
+      "high": ["test harmful content"]
+    }
+  },
+  "intent": {
+    "modelPath": "./test-models/intent-test.onnx",
+    "confidenceThreshold": 0.5,
+    "contextWindowSize": 3,
+    "maxConversationTurns": 5,
+    "disambiguationEnabled": false,
+    "customIntents": {
+      "test_intent": {
+        "name": "test_intent",
+        "patterns": ["test command", "run test"],
+        "parameters": {},
+        "requiresConfirmation": false
+      }
+    }
+  },
+  "response": {
+    "personalityEnabled": false,
+    "variationEnabled": false,
+    "contextAware": false,
+    "maxResponseLength": 100,
+    "templatePath": "./test-templates/responses",
+    "multiModalEnabled": false,
+    "emotionalTone": false
+  },
+  "tts": {
+    "engine": "mock-tts",
+    "voiceId": "test-voice",
+    "rate": 2.0,
+    "pitch": 1.0,
+    "volume": 0.5,
+    "ssmlEnabled": false,
+    "streamingEnabled": false,
+    "emotionalTones": ["neutral"],
+    "voiceCharacteristics": {
+      "consistency": false,
+      "avatarSync": false
+    }
+  },
+  "performance": {
+    "maxMemoryUsage": 1024,
+    "maxCpuUsage": 90,
+    "responseTimeTarget": 100,
+    "resourceMonitoring": false,
+    "adaptiveQuality": false,
+    "queueManagement": {
+      "maxQueueSize": 5,
+      "prioritization": false,
+      "timeoutHandling": false
+    }
+  },
+  "offline": {
+    "enabled": true,
+    "fallbackModels": {
+      "wakeWord": "./test-models/wake-word-mock.onnx",
+      "speechRecognition": "./test-models/whisper-mock.onnx",
+      "intent": "./test-models/intent-mock.onnx",
+      "tts": "./test-models/tts-mock.onnx"
+    },
+    "connectivityCheck": {
+      "interval": 5,
+      "timeout": 1,
+      "retryAttempts": 1
+    },
+    "featureAvailability": {
+      "basicVoiceCommands": true,
+      "smartHomeControl": false,
+      "weatherUpdates": false,
+      "onlineSearch": false
+    }
+  },
+  "logging": {
+    "level": "debug",
+    "enableConsole": true,
+    "enableFile": false,
+    "filePath": "./test-logs/voice-pipeline-test.log",
+    "maxFileSize": 1,
+    "maxFiles": 1,
+    "auditTrail": false,
+    "performanceMetrics": false,
+    "sanitizePII": false
+  },
+  "hardware": {
+    "platform": "generic",
+    "optimizations": {
+      "gpu": false,
+      "tensorrt": false,
+      "cuda": false
+    },
+    "resourceLimits": {
+      "memory": 2048,
+      "cpu": 2
+    },
+    "thermalManagement": false
+  }
+}

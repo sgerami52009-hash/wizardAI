@@ -1,0 +1,196 @@
+name: 🐛 Bug Report
+description: Report a bug or issue with the Jetson Home Assistant
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill out the information below to help us understand and fix the issue.
+        
+        **⚠️ Child Safety Notice**: If this bug involves child safety or inappropriate content, please mark it as urgent.
+
+  - type: checkboxes
+    id: safety-check
+    attributes:
+      label: Safety Check
+      description: Please confirm this bug report doesn't contain sensitive information
+      options:
+        - label: This bug report does not contain personal information, voice recordings, or other sensitive data
+          required: true
+        - label: This bug does not involve child safety violations (if it does, mark as urgent)
+          required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Bug Severity
+      description: How severe is this bug?
+      options:
+        - Low - Minor inconvenience
+        - Medium - Affects functionality but has workaround
+        - High - Major functionality broken
+        - Critical - System crash or child safety issue
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: dropdown
+    id: jetson-model
+    attributes:
+      label: Jetson Model
+      description: Which Jetson device are you using?
+      options:
+        - Jetson Nano Orin (8GB)
+        - Jetson Nano Orin (4GB)
+        - Other Jetson device
+        - Not using Jetson hardware
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: jetpack-version
+    attributes:
+      label: JetPack Version
+      description: What version of JetPack are you running?
+      placeholder: "e.g., 5.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Application Version
+      description: What version of Jetson Home Assistant are you running?
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment-method
+    attributes:
+      label: Deployment Method
+      description: How did you install the application?
+      options:
+        - Network deployment (deploy-jetson.sh)
+        - USB installation
+        - Docker container
+        - Manual installation
+        - Development setup
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Additional environment information
+      placeholder: |
+        - Node.js version:
+        - Docker version:
+        - Audio devices:
+        - Network setup:
+        - Any custom configurations:
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please include relevant log output (remove any personal information)
+      placeholder: |
+        Paste log output here. Make sure to remove any personal information, 
+        voice recordings, or sensitive data before submitting.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Videos
+      description: If applicable, add screenshots or videos to help explain the problem
+      placeholder: Drag and drop images/videos here or paste URLs
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting Steps Tried
+      description: What troubleshooting steps have you already tried?
+      options:
+        - label: Restarted the application
+        - label: Rebooted the Jetson device
+        - label: Checked system resources (memory, CPU, temperature)
+        - label: Verified audio devices are working
+        - label: Checked network connectivity
+        - label: Reviewed application logs
+        - label: Ran health check (node dist/health-check.js)
+        - label: Updated to latest version
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Any additional information that might be helpful
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Submission Guidelines
+      description: Please confirm you understand our submission guidelines
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have removed all personal information and sensitive data from this report
+          required: true
+        - label: I understand this is a family-friendly project focused on child safety
+          required: true

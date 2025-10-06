@@ -1,0 +1,273 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for the Jetson Home Assistant
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please provide detailed information about your idea.
+        
+        **🛡️ Child Safety First**: All features must be designed with child safety and family-friendly use in mind.
+
+  - type: checkboxes
+    id: safety-compliance
+    attributes:
+      label: Child Safety Compliance
+      description: Please confirm this feature request considers child safety
+      options:
+        - label: This feature is designed to be child-safe and family-friendly
+          required: true
+        - label: This feature includes appropriate parental controls where needed
+          required: true
+        - label: This feature does not compromise user privacy or data security
+          required: true
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      description: What category does this feature belong to?
+      options:
+        - Voice Interaction & Speech
+        - Avatar System & Animation
+        - Safety & Parental Controls
+        - Smart Home Integration
+        - Scheduling & Reminders
+        - User Interface & Experience
+        - Performance & Optimization
+        - Documentation & Setup
+        - Developer Tools
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve user experience
+        - High - Important for core functionality
+        - Critical - Essential for safety or compliance
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Describe the problem or limitation you're experiencing.
+        For example: "As a parent, I need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution in detail
+      placeholder: |
+        Describe how you envision this feature working.
+        Include user interactions, technical requirements, and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: User Stories
+      description: Describe how different users would interact with this feature
+      placeholder: |
+        Example user stories:
+        - As a child, I want to... so that...
+        - As a parent, I want to... so that...
+        - As a family, we want to... so that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What criteria must be met for this feature to be considered complete?
+      placeholder: |
+        List specific, measurable criteria:
+        - [ ] Feature works on Jetson Nano Orin hardware
+        - [ ] Response time is under 500ms
+        - [ ] Passes all child safety tests
+        - [ ] Includes parental controls
+        - [ ] Has comprehensive documentation
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: jetson-compatibility
+    attributes:
+      label: Jetson Hardware Considerations
+      description: Have you considered Jetson hardware limitations?
+      options:
+        - label: Feature is designed to work within 6GB memory limit
+        - label: Feature considers CPU/GPU performance constraints
+        - label: Feature includes thermal management considerations
+        - label: Feature works with limited storage space
+        - label: Feature is optimized for ARM64 architecture
+
+  - type: textarea
+    id: technical-requirements
+    attributes:
+      label: Technical Requirements
+      description: What technical requirements or constraints should be considered?
+      placeholder: |
+        Consider:
+        - Hardware requirements (memory, CPU, GPU)
+        - Software dependencies
+        - Network requirements
+        - Storage requirements
+        - Performance constraints
+        - Security requirements
+    validations:
+      required: false
+
+  - type: textarea
+    id: safety-considerations
+    attributes:
+      label: Safety & Privacy Considerations
+      description: What safety and privacy aspects need to be addressed?
+      placeholder: |
+        Consider:
+        - Child safety implications
+        - Parental control requirements
+        - Data privacy concerns
+        - Content filtering needs
+        - Age-appropriate design
+        - Accessibility requirements
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered alternative approaches?
+      placeholder: |
+        Describe any alternative solutions you've considered and why 
+        your proposed solution is preferred.
+    validations:
+      required: false
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or Examples
+      description: Include mockups, wireframes, or examples if applicable
+      placeholder: |
+        Drag and drop images here, paste URLs, or describe the visual design.
+        Include examples from other applications if relevant.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: implementation-complexity
+    attributes:
+      label: Implementation Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Simple - Minor changes to existing code
+        - Moderate - New component or significant changes
+        - Complex - Major architectural changes
+        - Very Complex - Requires extensive research and development
+        - Unknown - Need technical assessment
+      default: 4
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: impact-areas
+    attributes:
+      label: Impact Areas
+      description: Which parts of the system would this feature affect?
+      options:
+        - label: Voice processing pipeline
+        - label: Avatar rendering system
+        - label: Safety and content filtering
+        - label: User interface components
+        - label: Database and storage
+        - label: Network and API integrations
+        - label: Performance and resource usage
+        - label: Documentation and setup
+        - label: Testing and quality assurance
+
+  - type: textarea
+    id: testing-strategy
+    attributes:
+      label: Testing Strategy
+      description: How should this feature be tested?
+      placeholder: |
+        Consider:
+        - Unit tests needed
+        - Integration tests required
+        - Performance testing requirements
+        - Child safety testing needs
+        - User acceptance testing scenarios
+    validations:
+      required: false
+
+  - type: textarea
+    id: documentation-needs
+    attributes:
+      label: Documentation Requirements
+      description: What documentation would be needed for this feature?
+      placeholder: |
+        Consider:
+        - User documentation
+        - API documentation
+        - Setup/configuration guides
+        - Troubleshooting guides
+        - Developer documentation
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would be helpful
+      placeholder: |
+        Include any additional context, research, or information that 
+        would help understand and implement this feature.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      description: Are you interested in contributing to this feature?
+      options:
+        - label: I would like to help implement this feature
+        - label: I can help with testing this feature
+        - label: I can help with documentation for this feature
+        - label: I can provide feedback during development
+
+  - type: checkboxes
+    id: submission-guidelines
+    attributes:
+      label: Submission Guidelines
+      description: Please confirm you understand our guidelines
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I understand this feature must comply with child safety requirements
+          required: true
+        - label: I understand this feature must work within Jetson hardware constraints
+          required: true
+        - label: I am willing to participate in discussions about this feature
+          required: true

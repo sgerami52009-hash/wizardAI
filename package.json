@@ -1,0 +1,37 @@
+{
+  "name": "avatar-customization-system",
+  "version": "1.0.0",
+  "description": "Avatar customization system for family-friendly AI assistant",
+  "main": "avatar/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "safety-audit": "echo 'Safety audit would run here'",
+    "perf-test": "echo 'Performance test would run here'"
+  },
+  "keywords": [
+    "avatar",
+    "customization",
+    "3d-rendering",
+    "ai-assistant",
+    "child-safe"
+  ],
+  "author": "Avatar System Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.0.0",
+    "@types/jszip": "^3.4.1",
+    "@types/node": "^20.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.4.4",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "events": "^3.3.0",
+    "jszip": "^3.10.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "environment": "production",
+  "jetson": {
+    "model": "nano-orin",
+    "memory_limit_gb": 6,
+    "cpu_cores": 6,
+    "gpu_memory_mb": 1024
+  },
+  "voice": {
+    "wake_word": {
+      "enabled": true,
+      "model_path": "/app/models/wake-word-prod.onnx",
+      "sensitivity": 0.7,
+      "timeout_ms": 5000
+    },
+    "speech_recognition": {
+      "provider": "whisper",
+      "model_path": "/app/models/whisper-base-prod.onnx",
+      "language": "en-US",
+      "offline_mode": true,
+      "max_duration_seconds": 30
+    },
+    "text_to_speech": {
+      "provider": "local",
+      "model_path": "/app/models/tts-prod.onnx",
+      "voice": "neutral",
+      "speed": 1.0,
+      "cache_enabled": true
+    }
+  },
+  "audio": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "buffer_size": 1024,
+    "input_device": "default",
+    "output_device": "default",
+    "noise_reduction": true
+  },
+  "avatar": {
+    "rendering": {
+      "fps": 30,
+      "resolution": "1024x600",
+      "quality": "medium",
+      "hardware_acceleration": true
+    },
+    "animations": {
+      "lip_sync": true,
+      "emotional_expressions": true,
+      "idle_animations": true
+    }
+  },
+  "safety": {
+    "child_safety_enabled": true,
+    "content_filter_level": "strict",
+    "parental_controls": true,
+    "audit_logging": true,
+    "max_session_duration_minutes": 60
+  },
+  "performance": {
+    "memory_monitoring": true,
+    "cpu_monitoring": true,
+    "gpu_monitoring": true,
+    "auto_optimization": true,
+    "response_timeout_ms": 500
+  },
+  "logging": {
+    "level": "info",
+    "file_path": "/app/logs/assistant.log",
+    "max_file_size_mb": 100,
+    "max_files": 5,
+    "audit_log_path": "/app/logs/audit.log"
+  },
+  "security": {
+    "encryption_enabled": true,
+    "data_retention_days": 30,
+    "pii_scrubbing": true,
+    "secure_storage": true
+  }
+}

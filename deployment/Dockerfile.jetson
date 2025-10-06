@@ -1,0 +1,88 @@
+# Multi-stage Dockerfile for Jetson Nano Orin deployment
+FROM nvcr.io/nvidia/l4t-base:r35.4.1 as base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
+    cmake \
+    pkg-config \
+    libasound2-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libfftw3-dev \
+    libopenblas-dev \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    sox \
+    portaudio19-dev \
+    libportaudio2 \
+    libjack-jackd2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 18 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Create production stage
+FROM nvcr.io/nvidia/l4t-base:r35.4.1 as production
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    libasound2 \
+    libpulse0 \
+    libsndfile1 \
+    libfftw3-3 \
+    libopenblas0 \
+    ffmpeg \
+    sox \
+    portaudio19-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -m -u 1000 appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/package*.json ./
+
+# Create necessary directories
+RUN mkdir -p logs temp cache models config \
+    && chown -R appuser:appuser /app
+
+# Switch to app user
+USER appuser
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD node dist/health-check.js || exit 1
+
+# Start the application
+CMD ["node", "dist/index.js"]

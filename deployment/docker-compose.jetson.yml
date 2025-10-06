@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  home-assistant:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.jetson
+    container_name: jetson-home-assistant
+    restart: unless-stopped
+    
+    # Hardware access for Jetson
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NODE_ENV=production
+      - CUDA_VISIBLE_DEVICES=0
+    
+    # Resource limits for Jetson Nano Orin (8GB RAM)
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 2G
+    
+    # Audio device access
+    devices:
+      - /dev/snd:/dev/snd
+    
+    # Volume mounts
+    volumes:
+      - ../config:/app/config:ro
+      - ../models:/app/models:ro
+      - assistant_logs:/app/logs
+      - assistant_cache:/app/cache
+      - assistant_temp:/app/temp
+      - /etc/localtime:/etc/localtime:ro
+    
+    # Network configuration
+    ports:
+      - "3000:3000"
+      - "8080:8080"  # Web interface
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "dist/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+volumes:
+  assistant_logs:
+  assistant_cache:
+  assistant_temp:

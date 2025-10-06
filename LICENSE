@@ -1,0 +1,63 @@
+MIT License
+
+Copyright (c) 2024 Jetson Home Assistant Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Additional Terms for Child Safety
+
+This software is designed for use by families with children. Additional terms apply:
+
+1. **Child Safety Compliance**: Any use, modification, or distribution of this 
+   software must maintain compliance with child safety regulations including 
+   but not limited to COPPA (Children's Online Privacy Protection Act) and 
+   GDPR (General Data Protection Regulation).
+
+2. **Content Responsibility**: Users and contributors are responsible for 
+   ensuring all content generated, processed, or displayed by this software 
+   is appropriate for children and families.
+
+3. **Privacy Protection**: The software includes privacy protection mechanisms 
+   that must not be disabled or circumvented when used in environments 
+   accessible to children.
+
+4. **Parental Controls**: Built-in parental control features must remain 
+   functional and accessible to parents and guardians.
+
+5. **Data Protection**: Personal information, voice recordings, and user data 
+   must be handled according to the privacy protection standards implemented 
+   in this software.
+
+## Third-Party Licenses
+
+This software incorporates components from third-party sources. See the 
+THIRD-PARTY-LICENSES file for detailed attribution and license information.
+
+## Hardware Compliance
+
+This software is optimized for NVIDIA Jetson hardware and includes specific 
+optimizations and limitations for that platform. Use on other hardware may 
+require modifications to ensure proper operation and safety compliance.
+
+## Disclaimer
+
+This software is provided for educational and family use. While every effort 
+has been made to ensure child safety and privacy protection, users are 
+responsible for supervising children's interactions with the system and 
+ensuring appropriate use in their specific environment.
