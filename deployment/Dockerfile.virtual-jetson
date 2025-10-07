@@ -1,0 +1,190 @@
+# Virtual Jetson Nano Orin Environment
+# Simulates ARM64 architecture and Jetson-specific features
+
+FROM ubuntu:20.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set up Jetson simulation environment
+ENV JETSON_PLATFORM=nano-orin
+ENV JETSON_VIRTUAL=true
+ENV CUDA_VERSION=11.4
+ENV TENSORRT_VERSION=8.0
+ENV JETPACK_VERSION=5.1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    htop \
+    iotop \
+    build-essential \
+    cmake \
+    pkg-config \
+    libasound2-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libfftw3-dev \
+    libopenblas-dev \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    sox \
+    portaudio19-dev \
+    libportaudio2 \
+    libjack-jackd2-dev \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    unzip \
+    openssh-server \
+    sudo \
+    nano \
+    vim \
+    # Audio simulation
+    pulseaudio \
+    alsa-utils \
+    # Virtual display
+    xvfb \
+    x11vnc \
+    # Monitoring tools
+    sysstat \
+    iftop \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 18 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# Install Docker (for container-in-container simulation)
+RUN curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && rm get-docker.sh
+
+# Create jetson user (simulating default Jetson user)
+RUN useradd -m -s /bin/bash -G sudo,audio,video jetson \
+    && echo 'jetson:jetson' | chpasswd \
+    && echo 'jetson ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set up SSH for remote access simulation
+RUN mkdir /var/run/sshd \
+    && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config \
+    && echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config \
+    && sed -i 's/#Port 22/Port 22/' /etc/ssh/sshd_config
+
+# Create Jetson system info files (simulation)
+RUN echo "# R35 (release), REVISION: 4.1, GCID: 33958178, BOARD: t186ref, EABI: aarch64, DATE: Tue Aug  1 19:57:35 UTC 2023" > /etc/nv_tegra_release \
+    && echo "jetson-nano-orin" > /proc/device-tree/model || true
+
+# Set up virtual thermal zones (simulation)
+RUN mkdir -p /sys/class/thermal/thermal_zone0 \
+    && mkdir -p /sys/class/thermal/thermal_zone1 \
+    && echo "45000" > /sys/class/thermal/thermal_zone0/temp \
+    && echo "42000" > /sys/class/thermal/thermal_zone1/temp
+
+# Create virtual audio devices
+RUN mkdir -p /dev/snd \
+    && touch /dev/snd/controlC0 \
+    && touch /dev/snd/pcmC0D0p \
+    && touch /dev/snd/pcmC0D0c
+
+# Set working directory
+WORKDIR /app
+
+# Copy application files
+COPY dist/ ./dist/
+COPY config/ ./config/
+COPY deployment/ ./deployment/
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Create necessary directories
+RUN mkdir -p logs temp cache models \
+    && chown -R jetson:jetson /app
+
+# Set up virtual environment variables
+ENV NODE_ENV=production
+ENV JETSON_MODEL=nano-orin
+ENV JETSON_MEMORY_GB=8
+ENV JETSON_CPU_CORES=6
+
+# Create startup script
+RUN cat > /app/start-jetson.sh << 'EOF'
+#!/bin/bash
+
+echo "🚀 Starting Virtual Jetson Nano Orin Environment"
+echo "================================================"
+
+# Start SSH daemon
+service ssh start
+
+# Start virtual display
+Xvfb :99 -screen 0 1024x768x24 &
+export DISPLAY=:99
+
+# Start PulseAudio
+pulseaudio --start --system
+
+# Create virtual thermal monitoring
+while true; do
+    # Simulate temperature fluctuation
+    TEMP=$((40000 + RANDOM % 20000))
+    echo $TEMP > /sys/class/thermal/thermal_zone0/temp 2>/dev/null || true
+    echo $((TEMP - 3000)) > /sys/class/thermal/thermal_zone1/temp 2>/dev/null || true
+    sleep 30
+done &
+
+# Start the Home Assistant application
+echo "🏠 Starting Home Assistant..."
+cd /app
+node dist/index.js
+EOF
+
+RUN chmod +x /app/start-jetson.sh
+
+# Create health check script
+RUN cat > /app/jetson-health.sh << 'EOF'
+#!/bin/bash
+
+echo "🏥 Jetson Health Check"
+echo "====================="
+
+# Check system resources
+echo "Memory Usage:"
+free -h
+
+echo -e "\nCPU Usage:"
+top -bn1 | grep "Cpu(s)"
+
+echo -e "\nTemperature:"
+cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null | awk '{print $1/1000 "°C"}' || echo "N/A"
+
+echo -e "\nDisk Usage:"
+df -h /
+
+echo -e "\nApplication Health:"
+curl -f http://localhost:3000/health 2>/dev/null || echo "Application not responding"
+
+echo -e "\nDocker Status:"
+docker ps 2>/dev/null || echo "Docker not available"
+EOF
+
+RUN chmod +x /app/jetson-health.sh
+
+# Expose ports
+EXPOSE 3000 8080 22
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD node dist/health-check.js || exit 1
+
+# Switch to jetson user
+USER jetson
+
+# Start the virtual Jetson environment
+CMD ["/app/start-jetson.sh"]

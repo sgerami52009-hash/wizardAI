@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # Virtual Jetson Nano Orin Environment
+  virtual-jetson:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.virtual-jetson
+    container_name: virtual-jetson-nano
+    hostname: jetson-nano.local
+    restart: unless-stopped
+    
+    # Simulate Jetson hardware constraints
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '6.0'
+        reservations:
+          memory: 2G
+          cpus: '2.0'
+    
+    # Environment variables to simulate Jetson
+    environment:
+      - NODE_ENV=production
+      - JETSON_PLATFORM=nano-orin
+      - JETSON_VIRTUAL=true
+      - CUDA_VISIBLE_DEVICES=0
+      - DISPLAY=:99
+      - PULSE_RUNTIME_PATH=/tmp/pulse
+    
+    # Port mappings
+    ports:
+      - "3000:3000"    # API endpoint
+      - "8080:8080"    # Web interface
+      - "22:22"        # SSH access
+    
+    # Volume mounts
+    volumes:
+      - ../config:/app/config:ro
+      - ../models:/app/models:ro
+      - jetson_logs:/app/logs
+      - jetson_cache:/app/cache
+      - jetson_temp:/app/temp
+      - /etc/localtime:/etc/localtime:ro
+      # Virtual audio devices
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - jetson_pulse:/tmp/pulse
+    
+    # Capabilities for audio simulation
+    cap_add:
+      - SYS_ADMIN
+      - SYS_NICE
+    
+    # Device access simulation
+    devices:
+      - /dev/null:/dev/snd/controlC0
+      - /dev/null:/dev/snd/pcmC0D0p
+      - /dev/null:/dev/snd/pcmC0D0c
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "/app/dist/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # Virtual audio server for testing
+  virtual-audio:
+    image: ubuntu:20.04
+    container_name: virtual-audio-server
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y pulseaudio alsa-utils &&
+        pulseaudio --system --disallow-exit --disallow-module-loading=false --verbose
+      "
+    volumes:
+      - jetson_pulse:/tmp/pulse
+    restart: unless-stopped
+
+  # Monitoring dashboard
+  jetson-monitor:
+    image: prom/prometheus:latest
+    container_name: jetson-monitor
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+volumes:
+  jetson_logs:
+  jetson_cache:
+  jetson_temp:
+  jetson_pulse:
+
+networks:
+  default:
+    name: jetson-network
+    driver: bridge
