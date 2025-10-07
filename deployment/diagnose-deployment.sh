@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 JETSON_HOST="${JETSON_HOST:-jetson-nano.local}"
-JETSON_USER="${JETSON_USER:-jetson}"
+JETSON_USER="${JETSON_USER:-shervin}"
 
 # Colors
 RED='\033[0;31m'

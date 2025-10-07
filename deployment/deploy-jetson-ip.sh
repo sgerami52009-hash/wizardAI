@@ -4,7 +4,7 @@
 set -e
 
 # Default values
-JETSON_USER="jetson"
+JETSON_USER="shervin"
 PROJECT_NAME="jetson-home-assistant"
 
 # Colors for output
@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 usage() {
     echo "Usage: $0 -i JETSON_IP [-u JETSON_USER] [-p PROJECT_NAME]"
     echo "  -i JETSON_IP    IP address of the Jetson device (required)"
-    echo "  -u JETSON_USER  Username for SSH connection (default: jetson)"
+    echo "  -u JETSON_USER  Username for SSH connection (default: shervin)"
     echo "  -p PROJECT_NAME Project name (default: jetson-home-assistant)"
     exit 1
 }

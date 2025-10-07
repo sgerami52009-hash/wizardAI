@@ -58,7 +58,7 @@ bash deployment/deploy-jetson.sh
 
 #### Problem: SSH connection failed
 ```
-[ERROR] Cannot SSH to jetson@jetson-nano.local
+[ERROR] Cannot SSH to shervin@jetson-nano.local
 ```
 
 **Solutions:**
@@ -72,12 +72,12 @@ bash deployment/deploy-jetson.sh
 2. **Set up SSH keys:**
    ```bash
    ssh-keygen -t rsa
-   ssh-copy-id jetson@jetson-nano.local
+   ssh-copy-id shervin@jetson-nano.local
    ```
 
 3. **Test SSH manually:**
    ```bash
-   ssh jetson@jetson-nano.local
+   ssh shervin@jetson-nano.local
    ```
 
 ### 4. Docker Issues
@@ -90,7 +90,7 @@ bash deployment/deploy-jetson.sh
 **Solution - Install Docker on Jetson:**
 ```bash
 # SSH to Jetson first
-ssh jetson@jetson-nano.local
+ssh shervin@jetson-nano.local
 
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -165,18 +165,18 @@ scp: Connection refused
 **Solutions:**
 1. **Check SSH service:**
    ```bash
-   ssh jetson@jetson-nano.local "sudo systemctl status ssh"
+   ssh shervin@jetson-nano.local "sudo systemctl status ssh"
    ```
 
 2. **Check disk space on Jetson:**
    ```bash
-   ssh jetson@jetson-nano.local "df -h"
+   ssh shervin@jetson-nano.local "df -h"
    ```
 
 3. **Use alternative transfer method:**
    ```bash
    # Use rsync instead
-   rsync -avz --progress ./ jetson@jetson-nano.local:~/home-assistant/
+   rsync -avz --progress ./ shervin@jetson-nano.local:~/home-assistant/
    ```
 
 ### 7. Container Runtime Issues
@@ -189,17 +189,17 @@ docker: Error response from daemon: OCI runtime create failed
 **Solutions:**
 1. **Check container logs:**
    ```bash
-   ssh jetson@jetson-nano.local "docker logs jetson-home-assistant"
+   ssh shervin@jetson-nano.local "docker logs jetson-home-assistant"
    ```
 
 2. **Check system resources:**
    ```bash
-   ssh jetson@jetson-nano.local "free -h && df -h"
+   ssh shervin@jetson-nano.local "free -h && df -h"
    ```
 
 3. **Restart Docker service:**
    ```bash
-   ssh jetson@jetson-nano.local "sudo systemctl restart docker"
+   ssh shervin@jetson-nano.local "sudo systemctl restart docker"
    ```
 
 ### 8. Audio Device Issues
@@ -251,10 +251,10 @@ Error: listen EADDRINUSE: address already in use :::3000
 **Solution:**
 ```bash
 # Check what's using the port
-ssh jetson@jetson-nano.local "sudo netstat -tulpn | grep :3000"
+ssh shervin@jetson-nano.local "sudo netstat -tulpn | grep :3000"
 
 # Stop conflicting service
-ssh jetson@jetson-nano.local "sudo systemctl stop conflicting-service"
+ssh shervin@jetson-nano.local "sudo systemctl stop conflicting-service"
 
 # Or use different ports in docker-compose.jetson.yml
 ```
@@ -264,16 +264,16 @@ ssh jetson@jetson-nano.local "sudo systemctl stop conflicting-service"
 ### Check Jetson Status
 ```bash
 # System info
-ssh jetson@jetson-nano.local "uname -a && cat /etc/nv_tegra_release"
+ssh shervin@jetson-nano.local "uname -a && cat /etc/nv_tegra_release"
 
 # Resource usage
-ssh jetson@jetson-nano.local "free -h && df -h && nvidia-smi"
+ssh shervin@jetson-nano.local "free -h && df -h && nvidia-smi"
 
 # Docker status
-ssh jetson@jetson-nano.local "docker --version && docker-compose --version"
+ssh shervin@jetson-nano.local "docker --version && docker-compose --version"
 
 # Container status
-ssh jetson@jetson-nano.local "docker ps -a"
+ssh shervin@jetson-nano.local "docker ps -a"
 ```
 
 ### Application Health Check
@@ -303,10 +303,10 @@ sudo ./scripts/install.sh
 npm run build
 
 # Copy files manually
-scp -r dist/ config/ package*.json jetson@jetson-nano.local:~/home-assistant/
+scp -r dist/ config/ package*.json shervin@jetson-nano.local:~/home-assistant/
 
 # SSH and setup manually
-ssh jetson@jetson-nano.local
+ssh shervin@jetson-nano.local
 cd ~/home-assistant
 npm ci --production
 node dist/index.js
@@ -315,7 +315,7 @@ node dist/index.js
 ### Method 3: IP-based Deployment
 ```bash
 # Use IP address instead of hostname
-./deployment/deploy-jetson-ip.sh -i 192.168.1.100 -u jetson
+./deployment/deploy-jetson-ip.sh -i 192.168.1.100 -u shervin
 ```
 
 ## Getting Help
@@ -324,8 +324,8 @@ If you're still experiencing issues:
 
 1. **Check logs:**
    ```bash
-   ssh jetson@jetson-nano.local "journalctl -u docker -f"
-   ssh jetson@jetson-nano.local "docker logs jetson-home-assistant"
+   ssh shervin@jetson-nano.local "journalctl -u docker -f"
+   ssh shervin@jetson-nano.local "docker logs jetson-home-assistant"
    ```
 
 2. **Run diagnostics:**

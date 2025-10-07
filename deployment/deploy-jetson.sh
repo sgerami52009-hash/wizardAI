@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 JETSON_HOST="${JETSON_HOST:-jetson-nano.local}"
-JETSON_USER="${JETSON_USER:-jetson}"
+JETSON_USER="${JETSON_USER:-shervin}"
 DEPLOY_DIR="/home/$JETSON_USER/home-assistant"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -245,11 +245,11 @@ case "${1:-}" in
         echo ""
         echo "Environment variables:"
         echo "  JETSON_HOST    - Jetson device hostname or IP (default: jetson-nano.local)"
-        echo "  JETSON_USER    - SSH username (default: jetson)"
+        echo "  JETSON_USER    - SSH username (default: shervin)"
         echo ""
         echo "Examples:"
         echo "  JETSON_HOST=192.168.1.100 $0"
-        echo "  JETSON_USER=myuser JETSON_HOST=jetson.local $0"
+        echo "  JETSON_USER=shervin JETSON_HOST=jetson.local $0"
         exit 0
         ;;
     *)
