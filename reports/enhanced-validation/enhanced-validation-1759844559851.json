@@ -1,0 +1,213 @@
+{
+  "startTime": "2025-10-07T13:42:13.606Z",
+  "endTime": "2025-10-07T13:42:39.850Z",
+  "duration": 26244,
+  "overallStatus": "PASSED",
+  "totalTests": 9,
+  "passedTests": 9,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "categories": {
+    "Core System Health": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {
+        "Application Process Health Check": {
+          "status": "PASSED",
+          "duration": 26,
+          "result": {
+            "pid": 38728,
+            "status": "healthy",
+            "uptime": 11043,
+            "summary": "Process healthy, uptime: 11s"
+          },
+          "memoryDelta": 548912,
+          "details": "Process healthy, uptime: 11s"
+        },
+        "Memory Usage Analysis": {
+          "status": "PASSED",
+          "duration": 0,
+          "result": {
+            "memoryMB": "34.62",
+            "heapUsagePercent": "80.0",
+            "summary": "Memory: 35MB, Heap: 80.0%"
+          },
+          "memoryDelta": 4352,
+          "details": "Memory: 35MB, Heap: 80.0%"
+        },
+        "Component Initialization Verification": {
+          "status": "PASSED",
+          "duration": 2,
+          "result": {
+            "totalComponents": 4,
+            "initializedComponents": 4,
+            "components": [
+              "audio",
+              "voice",
+              "avatar",
+              "safety"
+            ],
+            "summary": "4 components initialized"
+          },
+          "memoryDelta": 59920,
+          "details": "4 components initialized"
+        }
+      }
+    },
+    "API Performance": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {
+        "API Response Time Benchmark": {
+          "status": "PASSED",
+          "duration": 27,
+          "result": {
+            "iterations": 50,
+            "avgResponseTime": "0.54",
+            "maxResponseTime": 2,
+            "minResponseTime": 0,
+            "summary": "Avg: 0.5ms over 50 requests"
+          },
+          "memoryDelta": 126512,
+          "details": "Avg: 0.5ms over 50 requests"
+        },
+        "Concurrent Load Testing": {
+          "status": "PASSED",
+          "duration": 17,
+          "result": {
+            "concurrentRequests": 25,
+            "successfulRequests": 25,
+            "successRate": "100.0",
+            "totalTime": 17,
+            "avgTimePerRequest": "0.68",
+            "summary": "100.0% success rate with 25 concurrent requests"
+          },
+          "memoryDelta": 376416,
+          "details": "100.0% success rate with 25 concurrent requests"
+        }
+      }
+    },
+    "Web Interface Advanced": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    },
+    "Stress Testing": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {
+        "Extended Load Stress Test": {
+          "status": "PASSED",
+          "duration": 15004,
+          "result": {
+            "duration": 15004,
+            "totalRequests": 140,
+            "successfulRequests": 140,
+            "successRate": "100.0",
+            "requestsPerSecond": "9.3",
+            "summary": "100.0% success under 9.3 req/s load"
+          },
+          "memoryDelta": 536168,
+          "details": "100.0% success under 9.3 req/s load"
+        },
+        "Memory Stability Under Stress": {
+          "status": "PASSED",
+          "duration": 79,
+          "result": {
+            "iterations": 200,
+            "initialMemoryMB": "41.02",
+            "finalMemoryMB": "41.63",
+            "memoryGrowthMB": "0.60",
+            "summary": "Memory growth: 0.6MB over 200 requests"
+          },
+          "memoryDelta": 19608,
+          "details": "Memory growth: 0.6MB over 200 requests"
+        }
+      }
+    },
+    "Feature Integration": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {
+        "Voice-Avatar Integration Simulation": {
+          "status": "PASSED",
+          "duration": 2,
+          "result": {
+            "voiceProcessed": true,
+            "avatarUpdated": true,
+            "summary": "Voice-Avatar integration endpoints responsive"
+          },
+          "memoryDelta": 50208,
+          "details": "Voice-Avatar integration endpoints responsive"
+        },
+        "Safety System Integration": {
+          "status": "PASSED",
+          "duration": 1,
+          "result": {
+            "childSafety": true,
+            "contentFilter": "strict",
+            "parentalControls": true,
+            "summary": "All safety systems properly integrated"
+          },
+          "memoryDelta": 17720,
+          "details": "All safety systems properly integrated"
+        }
+      }
+    },
+    "Safety & Security": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    },
+    "Family Features Advanced": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    },
+    "Jetson Hardware Simulation": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    },
+    "Long-Running Stability": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    },
+    "Resource Optimization": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "tests": {}
+    }
+  },
+  "systemMetrics": {},
+  "deploymentStatus": "RUNNING",
+  "performanceProfile": {
+    "avgMemoryMB": "36.98",
+    "maxMemoryMB": "41.02",
+    "minMemoryMB": "31.36",
+    "dataPoints": 25
+  },
+  "stressTestResults": {},
+  "featureValidation": {}
+}

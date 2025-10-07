@@ -1,0 +1,81 @@
+# Prometheus configuration for JetPack 6 monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    platform: 'jetson-orin-nano'
+    jetpack_version: '6.0'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "jetpack6_rules.yml"
+
+# Scrape configurations for JetPack 6
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # Home Assistant application
+  - job_name: 'home-assistant'
+    static_configs:
+      - targets: ['home-assistant:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    metric_relabel_configs:
+      # Add JetPack 6 specific labels
+      - source_labels: [__name__]
+        regex: 'node_thermal_zone_temp'
+        target_label: 'jetpack_thermal'
+        replacement: 'true'
+
+  # NVIDIA GPU metrics (JetPack 6 specific)
+  - job_name: 'nvidia-gpu'
+    static_configs:
+      - targets: ['nvidia-exporter:9445']
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metric_relabel_configs:
+      # Label GPU metrics for JetPack 6
+      - source_labels: [__name__]
+        regex: 'nvidia_.*'
+        target_label: 'jetpack_gpu'
+        replacement: 'true'
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-cache:6379']
+    scrape_interval: 30s
+
+  # JetPack 6 specific thermal monitoring
+  - job_name: 'jetson-thermal'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    params:
+      collect[]: ['thermal_zone']
+
+  # Custom application metrics
+  - job_name: 'home-assistant-custom'
+    static_configs:
+      - targets: ['home-assistant:3000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    honor_labels: true

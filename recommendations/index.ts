@@ -13,6 +13,12 @@ export { EducationalRecommender } from './engines/educational-recommender';
 export { HouseholdEfficiencyEngine } from './engines/household-efficiency-engine';
 export { ContextAnalyzer } from './analyzers/context-analyzer';
 export { LearningEngine } from './learning/learning-engine';
+export { LLMEnhancedLearningEngine } from './learning/llm-enhanced-learning-engine';
+export { 
+  LLMEnhancedLearningEngineFactory,
+  createLearningEngine,
+  createAutoConfiguredLearningEngine
+} from './learning/llm-enhanced-factory';
 export { PrivacyManager } from './privacy/privacy-manager';
 
 // Export configuration and settings management

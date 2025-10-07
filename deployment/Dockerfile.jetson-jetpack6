@@ -1,0 +1,370 @@
+# Production Dockerfile for Jetson Orin Nano - JetPack 6.0+ Compatible
+# Optimized for ARM64 architecture with NVIDIA JetPack 6.0+ support
+# Compatible with JetPack 6.0, 6.1, and future versions
+
+# Use NVIDIA's official JetPack 6.0+ base image for ARM64
+# JetPack 6.0 is based on Ubuntu 22.04 and includes CUDA 12.2+
+FROM nvcr.io/nvidia/l4t-jetpack:r36.3.0
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set Jetson production environment for JetPack 6+
+ENV JETSON_PLATFORM=orin-nano
+ENV JETSON_PRODUCTION=true
+ENV NODE_ENV=production
+ENV CUDA_VERSION=12.2
+ENV TENSORRT_VERSION=10.0
+ENV JETPACK_VERSION=6.0
+ENV UBUNTU_VERSION=22.04
+
+# JetPack 6 specific environment variables
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV PATH=/usr/local/cuda/bin:$PATH
+
+# Update package lists and install system dependencies optimized for JetPack 6
+RUN apt-get update && apt-get install -y \
+    # Core utilities
+    curl \
+    wget \
+    git \
+    htop \
+    iotop \
+    build-essential \
+    cmake \
+    pkg-config \
+    # Audio dependencies (updated for Ubuntu 22.04)
+    libasound2-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libfftw3-dev \
+    portaudio19-dev \
+    libportaudio2 \
+    pulseaudio \
+    alsa-utils \
+    pipewire \
+    pipewire-pulse \
+    # Python 3.10+ (default in Ubuntu 22.04)
+    python3 \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    # Media processing (updated versions)
+    ffmpeg \
+    sox \
+    # SSL/TLS support
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    # Archive utilities
+    unzip \
+    zip \
+    # System monitoring
+    sysstat \
+    nvtop \
+    # JetPack 6 specific tools
+    nvidia-jetpack \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Install Node.js 20 LTS (recommended for JetPack 6 / Ubuntu 22.04)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify Node.js installation
+RUN node --version && npm --version
+
+# Install Python dependencies optimized for JetPack 6
+# Use newer versions compatible with CUDA 12.2+ and TensorRT 10+
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip3 install --no-cache-dir \
+    numpy>=1.24.0 \
+    onnxruntime-gpu>=1.16.0 \
+    scipy>=1.10.0 \
+    librosa>=0.10.0 \
+    soundfile>=0.12.0 \
+    torch>=2.1.0 \
+    torchvision>=0.16.0 \
+    torchaudio>=2.1.0 \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# Create jetson user with proper permissions for JetPack 6
+RUN useradd -m -s /bin/bash -G audio,video,dialout,plugdev,sudo jetson \
+    && echo 'jetson:jetson' | chpasswd \
+    && mkdir -p /home/jetson/.config \
+    && chown -R jetson:jetson /home/jetson \
+    && echo 'jetson ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better Docker layer caching
+COPY package*.json ./
+
+# Install Node.js dependencies with JetPack 6 optimizations
+RUN npm ci --only=production --no-audit --no-fund \
+    && npm cache clean --force
+
+# Copy application files
+COPY dist/ ./dist/
+COPY config/ ./config/
+COPY models/ ./models/
+
+# Create necessary directories with proper permissions
+RUN mkdir -p logs temp cache data \
+    && chown -R jetson:jetson /app
+
+# Configure audio system for JetPack 6 (supports both PulseAudio and PipeWire)
+RUN echo "# JetPack 6 Audio Configuration" > /etc/asound.conf && \
+    echo "pcm.!default { type pulse }" >> /etc/asound.conf && \
+    echo "ctl.!default { type pulse }" >> /etc/asound.conf && \
+    echo "# Fallback to PipeWire if available" >> /etc/asound.conf && \
+    echo "pcm.pipewire { type pipewire }" >> /etc/asound.conf
+
+# Create optimized startup script for JetPack 6
+RUN cat > /app/start-jetson-jetpack6.sh << 'EOF'
+#!/bin/bash
+
+echo "🚀 Starting Home Assistant on Jetson Orin Nano (JetPack 6+)"
+echo "==========================================================="
+echo "Platform: $(cat /etc/nv_tegra_release 2>/dev/null | head -1 || echo 'Jetson Orin Nano')"
+echo "JetPack Version: ${JETPACK_VERSION}"
+echo "CUDA Version: ${CUDA_VERSION}"
+echo "TensorRT Version: ${TENSORRT_VERSION}"
+echo "Ubuntu Version: ${UBUNTU_VERSION}"
+echo "Memory: $(free -h | grep Mem | awk '{print $2}') total"
+echo "CPU Cores: $(nproc)"
+echo ""
+
+# JetPack 6 specific optimizations
+echo "🔧 Applying JetPack 6 optimizations..."
+
+# Set CPU governor to performance for better responsiveness
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null || true
+
+# Configure GPU memory and power settings for JetPack 6
+if [ -f /sys/devices/gpu.0/power_control ]; then
+    echo "auto" | sudo tee /sys/devices/gpu.0/power_control 2>/dev/null || true
+fi
+
+# Set NVIDIA power mode to maximum performance (JetPack 6)
+sudo nvpmodel -m 0 2>/dev/null || true
+sudo jetson_clocks 2>/dev/null || true
+
+# Configure memory settings for better performance
+echo 1 | sudo tee /proc/sys/vm/overcommit_memory 2>/dev/null || true
+
+# Start audio system (prefer PipeWire in JetPack 6, fallback to PulseAudio)
+if command -v pipewire >/dev/null 2>&1; then
+    echo "🔊 Starting PipeWire audio system..."
+    pipewire &
+    pipewire-pulse &
+    sleep 2
+elif command -v pulseaudio >/dev/null 2>&1; then
+    echo "🔊 Starting PulseAudio system..."
+    pulseaudio --start --system --disallow-exit --disallow-module-loading=false 2>/dev/null || true
+fi
+
+# Set audio device permissions
+chmod 666 /dev/snd/* 2>/dev/null || true
+
+# Verify CUDA and TensorRT availability
+echo "🔍 Verifying CUDA/TensorRT setup..."
+if command -v nvcc >/dev/null 2>&1; then
+    echo "✅ CUDA available: $(nvcc --version | grep release | awk '{print $6}' | cut -c2-)"
+else
+    echo "⚠️  CUDA not found in PATH"
+fi
+
+if [ -f /usr/include/NvInfer.h ]; then
+    echo "✅ TensorRT headers available"
+else
+    echo "⚠️  TensorRT headers not found"
+fi
+
+# Start the Home Assistant application
+echo "🏠 Starting Home Assistant..."
+cd /app
+
+# Set memory limits for Node.js optimized for JetPack 6 (8GB Orin Nano)
+export NODE_OPTIONS="--max-old-space-size=6144 --max-semi-space-size=128"
+
+# JetPack 6 specific Node.js optimizations
+export UV_THREADPOOL_SIZE=8
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
+# Start with production optimizations for JetPack 6
+exec node \
+    --max-old-space-size=6144 \
+    --max-semi-space-size=128 \
+    --optimize-for-size \
+    --gc-interval=100 \
+    --experimental-worker \
+    dist/index.js
+EOF
+
+RUN chmod +x /app/start-jetson-jetpack6.sh
+
+# Create JetPack 6 specific health monitoring script
+RUN cat > /app/jetson-health-jetpack6.sh << 'EOF'
+#!/bin/bash
+
+# JetPack 6 specific health monitoring
+check_jetson_jetpack6_health() {
+    echo "🏥 Jetson Orin Nano Health Check (JetPack 6+)"
+    echo "=============================================="
+    
+    # System info
+    echo "Platform: $(cat /etc/nv_tegra_release 2>/dev/null | head -1 || echo 'Unknown')"
+    echo "JetPack: ${JETPACK_VERSION}"
+    echo "CUDA: ${CUDA_VERSION}"
+    echo "TensorRT: ${TENSORRT_VERSION}"
+    echo "Ubuntu: ${UBUNTU_VERSION}"
+    
+    # Memory usage
+    echo -e "\nMemory Usage:"
+    free -h | grep -E "(Mem|Swap)"
+    
+    # CPU usage and frequency
+    echo -e "\nCPU Usage:"
+    top -bn1 | grep "Cpu(s)" | head -1
+    
+    # CPU frequencies (JetPack 6)
+    if [ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq ]; then
+        echo "CPU Frequency: $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq | awk '{print $1/1000 " MHz"}')"
+    fi
+    
+    # GPU information (JetPack 6)
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        echo -e "\nGPU Status:"
+        nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits | \
+        awk -F, '{printf "GPU Temp: %s°C, Utilization: %s%%, Memory: %sMB/%sMB\n", $1, $2, $3, $4}'
+    fi
+    
+    # Thermal zones (updated for JetPack 6)
+    echo -e "\nThermal Status:"
+    for zone in /sys/class/thermal/thermal_zone*/temp; do
+        if [ -f "$zone" ]; then
+            temp=$(cat "$zone" 2>/dev/null)
+            zone_name=$(basename $(dirname "$zone"))
+            echo "$zone_name: $((temp / 1000))°C"
+        fi
+    done
+    
+    # Power mode (JetPack 6)
+    if command -v nvpmodel >/dev/null 2>&1; then
+        echo -e "\nPower Mode:"
+        nvpmodel -q 2>/dev/null || echo "Power mode query failed"
+    fi
+    
+    # Disk usage
+    echo -e "\nDisk Usage:"
+    df -h / | tail -1
+    
+    # Application health
+    echo -e "\nApplication Health:"
+    if curl -f http://localhost:3000/health >/dev/null 2>&1; then
+        echo "✅ Application responding"
+    else
+        echo "❌ Application not responding"
+        return 1
+    fi
+    
+    # Check critical processes
+    if pgrep -f "node.*dist/index.js" >/dev/null; then
+        echo "✅ Home Assistant process running"
+    else
+        echo "❌ Home Assistant process not found"
+        return 1
+    fi
+    
+    # Check CUDA runtime
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        if nvidia-smi >/dev/null 2>&1; then
+            echo "✅ CUDA runtime accessible"
+        else
+            echo "⚠️  CUDA runtime issues detected"
+        fi
+    fi
+    
+    return 0
+}
+
+# Run health check
+check_jetson_jetpack6_health
+EOF
+
+RUN chmod +x /app/jetson-health-jetpack6.sh
+
+# Set up log rotation optimized for JetPack 6
+RUN cat > /etc/logrotate.d/home-assistant-jetpack6 << 'EOF'
+/app/logs/*.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+    maxsize 50M
+    postrotate
+        # Signal the application to reopen log files if needed
+        pkill -USR1 -f "node.*dist/index.js" 2>/dev/null || true
+    endscript
+}
+EOF
+
+# Create systemd service file for JetPack 6 integration
+RUN cat > /etc/systemd/system/home-assistant.service << 'EOF'
+[Unit]
+Description=Home Assistant for Jetson Orin Nano
+After=network.target nvidia-l4t-init.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=jetson
+Group=jetson
+WorkingDirectory=/app
+ExecStart=/app/start-jetson-jetpack6.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=home-assistant
+
+# JetPack 6 specific service settings
+Environment=NODE_ENV=production
+Environment=JETPACK_VERSION=6.0
+Environment=CUDA_VERSION=12.2
+Environment=TENSORRT_VERSION=10.0
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=32768
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Expose ports
+EXPOSE 3000 8080
+
+# Health check optimized for JetPack 6
+HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
+    CMD /app/jetson-health-jetpack6.sh || exit 1
+
+# Switch to jetson user for security
+USER jetson
+
+# Set resource limits via environment for JetPack 6
+ENV NODE_OPTIONS="--max-old-space-size=6144 --max-semi-space-size=128"
+ENV UV_THREADPOOL_SIZE=8
+
+# Start the production application
+CMD ["/app/start-jetson-jetpack6.sh"]

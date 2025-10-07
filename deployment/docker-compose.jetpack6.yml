@@ -1,0 +1,308 @@
+version: '3.8'
+
+services:
+  # Home Assistant for Jetson Orin Nano - JetPack 6.0+ Compatible
+  home-assistant:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.jetson-jetpack6
+    container_name: jetson-home-assistant-jp6
+    hostname: jetson-home-assistant.local
+    restart: unless-stopped
+    
+    # Jetson Orin Nano resource constraints optimized for JetPack 6
+    deploy:
+      resources:
+        limits:
+          memory: 7G        # Leave 1GB for system
+          cpus: '5.5'       # Leave 0.5 cores for system
+        reservations:
+          memory: 2G
+          cpus: '2.0'
+    
+    # JetPack 6 production environment variables
+    environment:
+      - NODE_ENV=production
+      - JETSON_PLATFORM=orin-nano
+      - JETSON_PRODUCTION=true
+      - JETPACK_VERSION=6.0
+      - CUDA_VERSION=12.2
+      - TENSORRT_VERSION=10.0
+      - UBUNTU_VERSION=22.04
+      # Node.js optimizations for JetPack 6
+      - NODE_OPTIONS=--max-old-space-size=6144 --max-semi-space-size=128
+      - UV_THREADPOOL_SIZE=8
+      # NVIDIA/CUDA settings
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/aarch64-linux-gnu
+      # Audio configuration (JetPack 6 supports both PulseAudio and PipeWire)
+      - PULSE_RUNTIME_PATH=/run/pulse
+      - PIPEWIRE_RUNTIME_DIR=/run/pipewire
+      - ALSA_CARD=0
+      # System settings
+      - TZ=America/New_York
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+      # Security
+      - SECURE_MODE=true
+      - CHILD_SAFETY_STRICT=true
+    
+    # Port mappings
+    ports:
+      - "3000:3000"    # API endpoint
+      - "8080:8080"    # Web interface
+    
+    # Volume mounts for persistence and hardware access (JetPack 6 optimized)
+    volumes:
+      # Application data persistence
+      - jetson_app_data:/app/data
+      - jetson_logs:/app/logs
+      - jetson_cache:/app/cache
+      - jetson_temp:/app/temp
+      # Configuration (read-only)
+      - ./config:/app/config:ro
+      # Models (read-only)
+      - ./models:/app/models:ro
+      # System integration
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # JetPack 6 specific mounts
+      - /etc/nv_tegra_release:/etc/nv_tegra_release:ro
+      - /proc/device-tree:/proc/device-tree:ro
+      # Audio system access (JetPack 6 - PipeWire + PulseAudio)
+      - /run/pulse:/run/pulse:rw
+      - /run/pipewire:/run/pipewire:rw
+      - /dev/snd:/dev/snd:rw
+      # CUDA/GPU access (JetPack 6)
+      - /usr/local/cuda:/usr/local/cuda:ro
+      - /usr/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:ro
+      # TensorRT libraries (JetPack 6)
+      - /usr/include/aarch64-linux-gnu:/usr/include/aarch64-linux-gnu:ro
+      - /usr/src/tensorrt:/usr/src/tensorrt:ro
+    
+    # Device access for Jetson hardware (JetPack 6 compatible)
+    devices:
+      # Audio devices
+      - /dev/snd:/dev/snd
+      # GPU devices (JetPack 6)
+      - /dev/nvhost-ctrl:/dev/nvhost-ctrl
+      - /dev/nvhost-ctrl-gpu:/dev/nvhost-ctrl-gpu
+      - /dev/nvmap:/dev/nvmap
+      - /dev/nvhost-dbg-gpu:/dev/nvhost-dbg-gpu
+      # Additional JetPack 6 devices
+      - /dev/nvhost-as-gpu:/dev/nvhost-as-gpu
+      - /dev/nvhost-prof-gpu:/dev/nvhost-prof-gpu
+    
+    # Capabilities for hardware access (JetPack 6)
+    cap_add:
+      - SYS_NICE        # For CPU priority adjustment
+      - IPC_LOCK        # For memory locking
+      - SYS_ADMIN       # For GPU access
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Runtime for NVIDIA GPU access (JetPack 6)
+    runtime: nvidia
+    
+    # Health check optimized for JetPack 6
+    healthcheck:
+      test: ["/app/jetson-health-jetpack6.sh"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 180s  # Longer startup time for JetPack 6 initialization
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=home-assistant,platform=jetson,jetpack=6.0"
+    
+    # Network configuration
+    networks:
+      - jetson-network
+    
+    # Dependencies
+    depends_on:
+      - redis-cache
+      - prometheus-monitoring
+
+  # Redis for caching and session management (JetPack 6 optimized)
+  redis-cache:
+    image: redis:7-alpine
+    container_name: jetson-redis-jp6
+    restart: unless-stopped
+    
+    # Resource limits for Redis on JetPack 6
+    deploy:
+      resources:
+        limits:
+          memory: 512M      # Increased for JetPack 6
+          cpus: '0.5'
+    
+    # Redis configuration optimized for JetPack 6
+    command: redis-server --maxmemory 400mb --maxmemory-policy allkeys-lru --save 300 10 --tcp-keepalive 60
+    
+    volumes:
+      - jetson_redis_data:/data
+    
+    # Health check for Redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    networks:
+      - jetson-network
+
+  # Prometheus monitoring for system metrics (JetPack 6 compatible)
+  prometheus-monitoring:
+    image: prom/prometheus:latest
+    container_name: jetson-prometheus-jp6
+    restart: unless-stopped
+    
+    # Resource limits for monitoring on JetPack 6
+    deploy:
+      resources:
+        limits:
+          memory: 1G        # Increased for better monitoring
+          cpus: '0.5'
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./monitoring/prometheus-jetpack6.yml:/etc/prometheus/prometheus.yml:ro
+      - jetson_prometheus_data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=14d'  # Keep 14 days of data for JetPack 6
+      - '--web.enable-admin-api'
+    
+    networks:
+      - jetson-network
+
+  # Node Exporter for system metrics (JetPack 6 compatible)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: jetson-node-exporter-jp6
+    restart: unless-stopped
+    
+    # Minimal resources for metrics collection
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+    
+    ports:
+      - "9100:9100"
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      # JetPack 6 specific monitoring paths
+      - /etc/nv_tegra_release:/host/etc/nv_tegra_release:ro
+      - /sys/class/thermal:/host/sys/class/thermal:ro
+    
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
+    
+    networks:
+      - jetson-network
+
+  # NVIDIA GPU metrics exporter (JetPack 6 specific)
+  nvidia-exporter:
+    image: mindprince/nvidia_gpu_prometheus_exporter:0.1
+    container_name: jetson-nvidia-exporter-jp6
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+    
+    ports:
+      - "9445:9445"
+    
+    # GPU access for metrics
+    devices:
+      - /dev/nvhost-ctrl:/dev/nvhost-ctrl
+      - /dev/nvhost-ctrl-gpu:/dev/nvhost-ctrl-gpu
+      - /dev/nvmap:/dev/nvmap
+    
+    runtime: nvidia
+    
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    
+    networks:
+      - jetson-network
+
+# Persistent volumes for data (JetPack 6 optimized paths)
+volumes:
+  jetson_app_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/home-assistant-jp6/data
+  
+  jetson_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/home-assistant-jp6/logs
+  
+  jetson_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/home-assistant-jp6/cache
+  
+  jetson_temp:
+    driver: local
+  
+  jetson_redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/home-assistant-jp6/redis
+  
+  jetson_prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/home-assistant-jp6/prometheus
+
+# Network configuration
+networks:
+  jetson-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: jetson-jp6-br0

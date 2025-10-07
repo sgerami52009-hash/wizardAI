@@ -1,0 +1,232 @@
+# Production Dockerfile for Jetson Orin Nano
+# Optimized for ARM64 architecture with NVIDIA JetPack support
+
+# Use NVIDIA's official JetPack base image for ARM64
+FROM nvcr.io/nvidia/l4t-base:r35.4.1
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set Jetson production environment
+ENV JETSON_PLATFORM=nano-orin
+ENV JETSON_PRODUCTION=true
+ENV NODE_ENV=production
+ENV CUDA_VERSION=11.4
+ENV TENSORRT_VERSION=8.5
+ENV JETPACK_VERSION=5.1.2
+
+# Install system dependencies optimized for Jetson
+RUN apt-get update && apt-get install -y \
+    # Core utilities
+    curl \
+    wget \
+    git \
+    htop \
+    iotop \
+    build-essential \
+    cmake \
+    pkg-config \
+    # Audio dependencies
+    libasound2-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libfftw3-dev \
+    portaudio19-dev \
+    libportaudio2 \
+    pulseaudio \
+    alsa-utils \
+    # Python for AI models
+    python3 \
+    python3-pip \
+    python3-dev \
+    # Media processing
+    ffmpeg \
+    sox \
+    # SSL/TLS support
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    # Archive utilities
+    unzip \
+    # System monitoring
+    sysstat \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Install Node.js 18 LTS (ARM64 compatible)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies for AI models
+RUN pip3 install --no-cache-dir \
+    numpy \
+    onnxruntime \
+    scipy \
+    librosa \
+    soundfile
+
+# Create jetson user with proper permissions
+RUN useradd -m -s /bin/bash -G audio,video,dialout jetson \
+    && echo 'jetson:jetson' | chpasswd \
+    && mkdir -p /home/jetson/.config \
+    && chown -R jetson:jetson /home/jetson
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better Docker layer caching
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production --no-audit --no-fund \
+    && npm cache clean --force
+
+# Copy application files
+COPY dist/ ./dist/
+COPY config/ ./config/
+COPY models/ ./models/
+
+# Create necessary directories with proper permissions
+RUN mkdir -p logs temp cache data \
+    && chown -R jetson:jetson /app
+
+# Configure audio system for Jetson
+RUN echo "pcm.!default { type pulse }" > /etc/asound.conf \
+    && echo "ctl.!default { type pulse }" >> /etc/asound.conf
+
+# Create optimized startup script for Jetson
+RUN cat > /app/start-jetson-production.sh << 'EOF'
+#!/bin/bash
+
+echo "🚀 Starting Home Assistant on Jetson Orin Nano"
+echo "==============================================="
+echo "Platform: $(cat /etc/nv_tegra_release 2>/dev/null | head -1 || echo 'Jetson Orin Nano')"
+echo "Memory: $(free -h | grep Mem | awk '{print $2}') total"
+echo "CPU Cores: $(nproc)"
+echo ""
+
+# Set CPU governor to performance for better responsiveness
+echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null || true
+
+# Configure GPU memory split (if available)
+if [ -f /proc/device-tree/chosen/nvidia,tegra-joint_xpu_rail ]; then
+    echo "GPU memory optimization enabled"
+fi
+
+# Start PulseAudio in system mode
+pulseaudio --start --system --disallow-exit --disallow-module-loading=false 2>/dev/null || true
+
+# Set audio device permissions
+chmod 666 /dev/snd/* 2>/dev/null || true
+
+# Start the Home Assistant application
+echo "🏠 Starting Home Assistant..."
+cd /app
+
+# Set memory limits for Node.js (important for 8GB Jetson)
+export NODE_OPTIONS="--max-old-space-size=6144"  # 6GB limit
+
+# Start with production optimizations
+exec node \
+    --max-old-space-size=6144 \
+    --optimize-for-size \
+    --gc-interval=100 \
+    dist/index.js
+EOF
+
+RUN chmod +x /app/start-jetson-production.sh
+
+# Create health monitoring script
+RUN cat > /app/jetson-health-production.sh << 'EOF'
+#!/bin/bash
+
+# Jetson-specific health monitoring
+check_jetson_health() {
+    echo "🏥 Jetson Orin Nano Health Check"
+    echo "================================"
+    
+    # System info
+    echo "Platform: $(cat /etc/nv_tegra_release 2>/dev/null | head -1 || echo 'Unknown')"
+    
+    # Memory usage
+    echo "Memory Usage:"
+    free -h | grep -E "(Mem|Swap)"
+    
+    # CPU usage and temperature
+    echo -e "\nCPU Usage:"
+    top -bn1 | grep "Cpu(s)" | head -1
+    
+    # GPU temperature (Jetson specific)
+    if [ -f /sys/class/thermal/thermal_zone1/temp ]; then
+        GPU_TEMP=$(cat /sys/class/thermal/thermal_zone1/temp)
+        echo "GPU Temperature: $((GPU_TEMP / 1000))°C"
+    fi
+    
+    # CPU temperature
+    if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+        CPU_TEMP=$(cat /sys/class/thermal/thermal_zone0/temp)
+        echo "CPU Temperature: $((CPU_TEMP / 1000))°C"
+    fi
+    
+    # Disk usage
+    echo -e "\nDisk Usage:"
+    df -h / | tail -1
+    
+    # Application health
+    echo -e "\nApplication Health:"
+    if curl -f http://localhost:3000/health >/dev/null 2>&1; then
+        echo "✅ Application responding"
+    else
+        echo "❌ Application not responding"
+        return 1
+    fi
+    
+    # Check critical processes
+    if pgrep -f "node.*dist/index.js" >/dev/null; then
+        echo "✅ Home Assistant process running"
+    else
+        echo "❌ Home Assistant process not found"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Run health check
+check_jetson_health
+EOF
+
+RUN chmod +x /app/jetson-health-production.sh
+
+# Set up log rotation
+RUN cat > /etc/logrotate.d/home-assistant << 'EOF'
+/app/logs/*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+    maxsize 100M
+}
+EOF
+
+# Expose ports
+EXPOSE 3000 8080
+
+# Health check optimized for Jetson
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=3 \
+    CMD /app/jetson-health-production.sh || exit 1
+
+# Switch to jetson user for security
+USER jetson
+
+# Set resource limits via environment
+ENV NODE_OPTIONS="--max-old-space-size=6144"
+
+# Start the production application
+CMD ["/app/start-jetson-production.sh"]

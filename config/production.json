@@ -2,9 +2,10 @@
   "environment": "production",
   "jetson": {
     "model": "nano-orin",
-    "memory_limit_gb": 6,
+    "memory_gb": 8,
     "cpu_cores": 6,
-    "gpu_memory_mb": 1024
+    "gpu_enabled": true,
+    "virtual": true
   },
   "voice": {
     "wake_word": {
