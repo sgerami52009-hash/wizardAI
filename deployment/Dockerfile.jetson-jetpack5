@@ -1,0 +1,81 @@
+# JetPack 5 Compatible Dockerfile for Jetson Nano Orin
+FROM nvcr.io/nvidia/l4t-base:r35.4.1
+
+# JetPack 5 environment variables
+ENV JETPACK_VERSION=5.1
+ENV CUDA_VERSION=11.4
+ENV TENSORRT_VERSION=8.5
+ENV UBUNTU_VERSION=20.04
+
+# Install system dependencies for JetPack 5
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
+    cmake \
+    pkg-config \
+    libasound2-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libfftw3-dev \
+    libopenblas-dev \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    sox \
+    portaudio19-dev \
+    libportaudio2 \
+    libjack-jackd2-dev \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 18 LTS (compatible with JetPack 5)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# Install Python dependencies for JetPack 5
+RUN pip3 install --no-cache-dir \
+    numpy==1.21.6 \
+    scipy==1.7.3 \
+    soundfile==0.10.3 \
+    pyaudio==0.2.11 \
+    librosa==0.9.2
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build the application with JetPack 5 optimizations
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN npm run build
+
+# Create necessary directories
+RUN mkdir -p logs temp cache models config \
+    && chmod 755 logs temp cache models config
+
+# Create app user for security
+RUN useradd -m -u 1000 appuser \
+    && chown -R appuser:appuser /app
+
+# Switch to app user
+USER appuser
+
+# Expose ports
+EXPOSE 3000 8080
+
+# Health check optimized for JetPack 5
+HEALTHCHECK --interval=45s --timeout=15s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the application
+CMD ["node", "dist/index.js"]

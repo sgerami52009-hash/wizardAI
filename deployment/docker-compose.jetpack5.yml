@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  home-assistant:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.jetson-jetpack5
+    container_name: jetson-home-assistant-jp5
+    restart: unless-stopped
+    
+    # JetPack 5 specific configuration
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NODE_ENV=production
+      - CUDA_VISIBLE_DEVICES=0
+      - JETPACK_VERSION=5.1
+      - NODE_OPTIONS=--max-old-space-size=4096
+    
+    # Resource limits for JetPack 5 (more conservative)
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+          cpus: '3.0'
+        reservations:
+          memory: 1.5G
+          cpus: '1.0'
+    
+    # JetPack 5 device mappings
+    devices:
+      - /dev/snd:/dev/snd
+      - /dev/nvhost-ctrl:/dev/nvhost-ctrl
+      - /dev/nvhost-ctrl-gpu:/dev/nvhost-ctrl-gpu
+      - /dev/nvhost-as-gpu:/dev/nvhost-as-gpu
+    
+    # Volume mounts
+    volumes:
+      - ../config:/app/config:ro
+      - ../models:/app/models:ro
+      - assistant_logs:/app/logs
+      - assistant_cache:/app/cache
+      - assistant_temp:/app/temp
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    
+    # Network configuration
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+    
+    # Health check with longer timeouts for JetPack 5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 45s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  assistant_logs:
+  assistant_cache:
+  assistant_temp:
