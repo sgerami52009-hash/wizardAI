@@ -12,6 +12,11 @@ DEPLOY_DIR="/home/$JETSON_USER/home-assistant"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# JetPack 5 Configuration
+JETPACK_VERSION=5.1
+CUDA_VERSION=11.4
+TENSORRT_VERSION=8.5
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

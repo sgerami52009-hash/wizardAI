@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  virtual-jetson-jp5:
+    build:
+      context: .
+      dockerfile: Dockerfile.virtual-jetson-jp5
+    container_name: virtual-jetson-jp5
+    hostname: jetson-nano-virtual
+    
+    # Simulate Jetson hardware constraints
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '6.0'
+        reservations:
+          memory: 2G
+          cpus: '2.0'
+    
+    # Environment variables for JetPack 5 simulation
+    environment:
+      - JETPACK_VERSION=5.1
+      - CUDA_VERSION=11.4
+      - TENSORRT_VERSION=8.5
+      - L4T_VERSION=35.4.1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    
+    # Port mappings for testing
+    ports:
+      - "2222:22"    # SSH access
+      - "3000:3000"  # API endpoint
+      - "8080:8080"  # Web interface
+    
+    # Volume mounts for development
+    volumes:
+      - ../:/workspace:ro
+      - virtual_jetson_home:/home/jetson/home-assistant
+      - virtual_jetson_logs:/var/log
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    
+    # Privileged mode to simulate hardware access
+    privileged: true
+    
+    # Keep container running
+    tty: true
+    stdin_open: true
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  virtual_jetson_home:
+  virtual_jetson_logs:
